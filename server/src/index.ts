@@ -18,10 +18,23 @@ import hoursRouter from './routes/hours.js';
 import dashboardRouter from './routes/dashboard.js';
 import reportsRouter from './routes/reports.js';
 
+// Catch any unhandled errors so they appear in Railway deploy logs
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] uncaughtException:', err);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[FATAL] unhandledRejection:', reason);
+  process.exit(1);
+});
+
+console.log('[startup] All modules loaded OK');
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+console.log(`[startup] PORT=${PORT} NODE_ENV=${process.env.NODE_ENV}`);
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:5173',
@@ -53,6 +66,6 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`RealTaylor server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[startup] RealTaylor server running on http://0.0.0.0:${PORT}`);
 });

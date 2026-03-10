@@ -82,6 +82,8 @@ RUN apt-get update && apt-get install -y \
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV NODE_ENV=production
+# Prevent @prisma/client postinstall from running `prisma generate` (CLI not in prod deps)
+ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
 
 COPY package.json ./
 COPY server/package.json ./server/
