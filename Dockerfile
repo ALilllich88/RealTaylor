@@ -99,7 +99,10 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/server/dist ./server/dist
 COPY --from=builder /app/client/dist ./client/dist
 
+# Copy startup script
+COPY startup.sh ./startup.sh
+
 EXPOSE 3000
 
 # Push schema then start server
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node server/dist/index.js"]
+CMD ["sh", "startup.sh"]
