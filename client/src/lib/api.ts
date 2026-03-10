@@ -54,6 +54,8 @@ export const calculateDistance = (data: CalculateDistanceRequest) =>
   api.post<CalculateDistanceResponse>('/mileage/calculate-distance', data).then((r) => r.data);
 export const getRecentTrips = () =>
   api.get<MileageEntry[]>('/mileage/recent-trips').then((r) => r.data);
+export const suggestAddresses = (input: string) =>
+  api.get<{ suggestions: string[] }>('/mileage/address-suggest', { params: { input } }).then((r) => r.data.suggestions);
 
 // Hours
 export const getHours = (params?: Record<string, string>) =>

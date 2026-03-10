@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { calculateDistance } from '../services/googleMaps.js';
+import { calculateDistance, suggestAddresses } from '../services/googleMaps.js';
 import { AVG_SPEED_MPH } from '../constants.js';
 
 const router = Router();
@@ -113,6 +113,22 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to create mileage entry' });
+  }
+});
+
+// GET /api/mileage/address-suggest?input=<query>
+router.get('/address-suggest', async (req, res) => {
+  try {
+    const input = String(req.query.input ?? '').trim();
+    if (input.length < 2) {
+      res.json({ suggestions: [] });
+      return;
+    }
+    const suggestions = await suggestAddresses(input);
+    res.json({ suggestions });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Autocomplete failed';
+    res.status(500).json({ error: message });
   }
 });
 

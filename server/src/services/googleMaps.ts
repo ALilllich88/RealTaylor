@@ -62,3 +62,24 @@ export async function calculateDistance(
 
   return { miles, cached: false };
 }
+
+export async function suggestAddresses(input: string): Promise<string[]> {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) throw new Error('GOOGLE_MAPS_API_KEY is not configured');
+
+  const response = await axios.get(
+    'https://maps.googleapis.com/maps/api/place/autocomplete/json',
+    {
+      params: {
+        input,
+        key: apiKey,
+        types: 'address',
+        language: 'en',
+        components: 'country:us',
+      },
+    }
+  );
+
+  const predictions: Array<{ description: string }> = response.data.predictions ?? [];
+  return predictions.map((p) => p.description);
+}

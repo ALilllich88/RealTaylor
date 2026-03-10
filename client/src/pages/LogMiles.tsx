@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
-import { ArrowLeft, ArrowRight, RotateCcw, Loader2, Car } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RotateCcw, Loader2, Car, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,11 +9,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EntityBadge } from '@/components/EntityBadge';
+import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { usePlaces } from '@/hooks/usePlaces';
 import { useMileage, useCreateMileage, useUpdateMileage, useDeleteMileage, useCalculateDistance, useRecentTrips } from '@/hooks/useMileage';
 import { ENTITIES } from '@/lib/constants';
 import { todayISODate } from '@/lib/utils';
+import { AVG_SPEED_MPH } from '@shared/types';
 import type { FavoritePlace } from '@shared/types';
 
 interface FormValues {
@@ -85,6 +87,13 @@ export function LogMiles() {
   const toAddress = watch('toAddress');
   const isRoundTrip = watch('isRoundTrip');
   const entity = watch('entity');
+  const actualMilesVal = watch('actualMiles');
+
+  const estimatedMinutes = (() => {
+    const m = parseFloat(actualMilesVal);
+    if (!m || m <= 0) return null;
+    return Math.round((m / AVG_SPEED_MPH) * 60);
+  })();
 
   // Auto-calculate distance
   useEffect(() => {
@@ -103,7 +112,7 @@ export function LogMiles() {
     calcDistance.mutate({ fromAddress: from, toAddress: to }, {
       onSuccess: (data) => {
         const miles = isRoundTrip ? data.miles * 2 : data.miles;
-        setValue('actualMiles', String(miles));
+        setValue('actualMiles', miles.toFixed(1));
         setCalcStatus('done');
       },
       onError: () => setCalcStatus('error'),
@@ -232,7 +241,18 @@ export function LogMiles() {
             )}
           />
           {!fromPlaceId && (
-            <Input placeholder="Or type address…" {...register('fromAddress')} className="mt-1" />
+            <Controller
+              control={control}
+              name="fromAddress"
+              render={({ field }) => (
+                <AddressAutocomplete
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Or type address…"
+                  className="mt-1"
+                />
+              )}
+            />
           )}
         </div>
 
@@ -257,7 +277,18 @@ export function LogMiles() {
             )}
           />
           {!toPlaceId && (
-            <Input placeholder="Or type address…" {...register('toAddress')} className="mt-1" />
+            <Controller
+              control={control}
+              name="toAddress"
+              render={({ field }) => (
+                <AddressAutocomplete
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Or type address…"
+                  className="mt-1"
+                />
+              )}
+            />
           )}
         </div>
 
@@ -345,9 +376,22 @@ export function LogMiles() {
         </div>
 
         {entity && entity !== 'Personal' && !isEdit && (
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-xs text-purple-700">
-            <Car className="inline h-3.5 w-3.5 mr-1" />
-            A travel hours entry will be auto-logged for this business trip.
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-xs text-purple-700 space-y-1">
+            <div>
+              <Car className="inline h-3.5 w-3.5 mr-1" />
+              A travel hours entry will be auto-logged for this business trip.
+            </div>
+            {estimatedMinutes !== null && (
+              <div className="flex items-center gap-1 font-medium">
+                <Clock className="h-3.5 w-3.5" />
+                Estimated drive time: ~{estimatedMinutes} min
+                {estimatedMinutes >= 60 && (
+                  <span className="text-purple-500 font-normal">
+                    ({Math.floor(estimatedMinutes / 60)}h {estimatedMinutes % 60}m)
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         )}
 
