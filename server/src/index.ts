@@ -33,7 +33,7 @@ console.log('[startup] All modules loaded OK');
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 console.log(`[startup] PORT=${PORT} NODE_ENV=${process.env.NODE_ENV}`);
 
 app.use(cors({

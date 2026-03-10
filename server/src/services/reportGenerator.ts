@@ -1,4 +1,3 @@
-import puppeteer from 'puppeteer';
 import { entityColor, DEFAULT_IRS_MILEAGE_RATE } from '../constants.js';
 
 const irsRate = parseFloat(process.env.IRS_MILEAGE_RATE || String(DEFAULT_IRS_MILEAGE_RATE));
@@ -122,8 +121,10 @@ export async function generateAnnualSummaryPdf(data: any, year: number): Promise
 }
 
 async function renderPdf(html: string): Promise<Buffer> {
+  const { default: puppeteer } = await import('puppeteer');
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
   try {
