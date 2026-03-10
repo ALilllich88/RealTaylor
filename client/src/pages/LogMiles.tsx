@@ -218,12 +218,12 @@ export function LogMiles() {
             control={control}
             name="fromPlaceId"
             render={({ field }) => (
-              <Select value={field.value} onValueChange={(v) => { field.onChange(v); setValue('fromAddress', ''); }}>
+              <Select value={field.value || '__none__'} onValueChange={(v) => { field.onChange(v === '__none__' ? '' : v); setValue('fromAddress', ''); }}>
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select a place…" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— One-time address —</SelectItem>
+                  <SelectItem value="__none__">— One-time address —</SelectItem>
                   {places.map((p) => (
                     <SelectItem key={p.id} value={p.id}>{placeLabel(p)}</SelectItem>
                   ))}
@@ -243,12 +243,12 @@ export function LogMiles() {
             control={control}
             name="toPlaceId"
             render={({ field }) => (
-              <Select value={field.value} onValueChange={(v) => { field.onChange(v); setValue('toAddress', ''); }}>
+              <Select value={field.value || '__none__'} onValueChange={(v) => { field.onChange(v === '__none__' ? '' : v); setValue('toAddress', ''); }}>
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select a place…" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— One-time address —</SelectItem>
+                  <SelectItem value="__none__">— One-time address —</SelectItem>
                   {places.map((p) => (
                     <SelectItem key={p.id} value={p.id}>{placeLabel(p)}</SelectItem>
                   ))}
