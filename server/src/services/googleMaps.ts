@@ -63,23 +63,45 @@ export async function calculateDistance(
   return { miles, cached: false };
 }
 
+interface NominatimResult {
+  display_name: string;
+  address: {
+    house_number?: string;
+    road?: string;
+    city?: string;
+    town?: string;
+    village?: string;
+    county?: string;
+    state?: string;
+    postcode?: string;
+  };
+}
+
+function formatNominatimAddress(r: NominatimResult): string {
+  const a = r.address;
+  const street = [a.house_number, a.road].filter(Boolean).join(' ');
+  const city = a.city ?? a.town ?? a.village ?? a.county ?? '';
+  const parts = [street, city, a.state, a.postcode].filter(Boolean);
+  return parts.length >= 3 ? parts.join(', ') : r.display_name;
+}
+
 export async function suggestAddresses(input: string): Promise<string[]> {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-  if (!apiKey) throw new Error('GOOGLE_MAPS_API_KEY is not configured');
+  // Use OpenStreetMap Nominatim — free, no extra API key required
+  const response = await axios.get('https://nominatim.openstreetmap.org/search', {
+    params: {
+      format: 'json',
+      q: input,
+      limit: 6,
+      countrycodes: 'us',
+      addressdetails: 1,
+    },
+    headers: {
+      'User-Agent': 'RealTaylor-REPS-Tracker/1.0',
+      'Accept-Language': 'en-US,en',
+    },
+    timeout: 5000,
+  });
 
-  const response = await axios.get(
-    'https://maps.googleapis.com/maps/api/place/autocomplete/json',
-    {
-      params: {
-        input,
-        key: apiKey,
-        types: 'address',
-        language: 'en',
-        components: 'country:us',
-      },
-    }
-  );
-
-  const predictions: Array<{ description: string }> = response.data.predictions ?? [];
-  return predictions.map((p) => p.description);
+  const results: NominatimResult[] = response.data ?? [];
+  return results.map(formatNominatimAddress);
 }

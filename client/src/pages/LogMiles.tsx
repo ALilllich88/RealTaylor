@@ -46,6 +46,8 @@ export function LogMiles() {
   const calcDistance = useCalculateDistance();
 
   const [calcStatus, setCalcStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  // Stores the one-way distance from the API so round-trip toggle can re-apply the multiplier
+  const [baseOnewayMiles, setBaseOnewayMiles] = useState<number | null>(null);
 
   const { register, handleSubmit, control, watch, setValue, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
     defaultValues: {
@@ -63,6 +65,8 @@ export function LogMiles() {
         .then((entries) => {
           const entry = entries.find((e: any) => e.id === id);
           if (entry) {
+            // Seed base one-way miles so the round-trip toggle works in edit mode
+            if (entry.calculatedMiles != null) setBaseOnewayMiles(entry.calculatedMiles);
             reset({
               date: entry.date.slice(0, 10),
               fromPlaceId: entry.fromPlaceId || '',
@@ -111,6 +115,7 @@ export function LogMiles() {
     setCalcStatus('loading');
     calcDistance.mutate({ fromAddress: from, toAddress: to }, {
       onSuccess: (data) => {
+        setBaseOnewayMiles(data.miles);
         const miles = isRoundTrip ? data.miles * 2 : data.miles;
         setValue('actualMiles', miles.toFixed(1));
         setCalcStatus('done');
@@ -120,13 +125,12 @@ export function LogMiles() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromPlaceId, toPlaceId, fromAddress, toAddress]);
 
+  // When the round-trip toggle changes, re-apply the multiplier using the stored one-way distance
   useEffect(() => {
-    const miles = parseFloat(watch('actualMiles'));
-    if (!isNaN(miles)) {
-      // Recalculate for round trip toggle
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRoundTrip]);
+    if (baseOnewayMiles === null) return;
+    const miles = isRoundTrip ? baseOnewayMiles * 2 : baseOnewayMiles;
+    setValue('actualMiles', miles.toFixed(1));
+  }, [isRoundTrip, baseOnewayMiles, setValue]);
 
   const onSubmit = async (values: FormValues) => {
     const payload = {
