@@ -60,8 +60,11 @@ app.use('/api/reports', authMiddleware, reportsRouter);
 // Serve client in production
 if (process.env.NODE_ENV === 'production') {
   const clientDist = path.resolve(__dirname, '../../client/dist');
-  app.use(express.static(clientDist));
+  // Hashed assets (JS/CSS) can be cached long-term; index.html must never be cached
+  app.use('/assets', express.static(path.join(clientDist, 'assets'), { maxAge: '1y', immutable: true }));
+  app.use(express.static(clientDist, { maxAge: 0 }));
   app.get('*', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(clientDist, 'index.html'));
   });
 }
