@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: realtaylor
+      POSTGRES_PASSWORD: realtaylor_secret
+      POSTGRES_DB: realtaylor
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U realtaylor']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgresql://realtaylor:realtaylor_secret@db:5432/realtaylor
+      NODE_ENV: production
+      APP_PIN: '${APP_PIN:-1234}'
+      JWT_SECRET: '${JWT_SECRET:-change-me-in-production}'
+      GOOGLE_MAPS_API_KEY: '${GOOGLE_MAPS_API_KEY}'
+      IRS_MILEAGE_RATE: '${IRS_MILEAGE_RATE:-0.70}'
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
