@@ -26,31 +26,32 @@ RUN apt-get update && apt-get install -y \
   --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
-# Set Puppeteer to use system Chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
 
 # Copy package files
-COPY package.json ./
+COPY package.json package-lock.json ./
 COPY server/package.json ./server/
 COPY client/package.json ./client/
 COPY prisma ./prisma/
 COPY shared ./shared/
 
-# Install all deps
-RUN npm install --workspaces
+# Install all deps (reproducible install)
+RUN npm ci --workspaces
+
+# Generate Prisma client (into node_modules — preserved through prune)
+RUN npx prisma generate
 
 # Copy source
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate
-
-# Build client
+# Build client and server
 RUN npm run build --workspace=client
-
-# Build server
 RUN npm run build --workspace=server
+
+# Prune dev deps in-place — keeps generated Prisma client and engine binaries
+RUN npm prune --workspaces --omit=dev
 
 # ---- Production stage ----
 FROM node:20-slim AS runner
@@ -82,23 +83,23 @@ RUN apt-get update && apt-get install -y \
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV NODE_ENV=production
-# Prevent @prisma/client postinstall from running `prisma generate` (CLI not in prod deps)
 ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
 
+# Copy package files (needed for Node module resolution)
 COPY package.json ./
 COPY server/package.json ./server/
 COPY client/package.json ./client/
 COPY prisma ./prisma/
 COPY shared ./shared/
 
-RUN npm install --workspaces --omit=dev
+# Copy pruned node_modules from builder (includes generated Prisma client + engine)
+COPY --from=builder /app/node_modules ./node_modules
 
+# Copy built artifacts
 COPY --from=builder /app/server/dist ./server/dist
 COPY --from=builder /app/client/dist ./client/dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 EXPOSE 3000
 
-# Run migrations then start
+# Push schema then start server
 CMD ["sh", "-c", "npx prisma db push --skip-generate && node server/dist/index.js"]
