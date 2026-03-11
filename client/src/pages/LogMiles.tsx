@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
-import { ArrowLeft, ArrowRight, Loader2, Car, Clock, Gauge, MapPin } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Car, Clock, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +26,6 @@ interface FormValues {
   toAddress: string;
   actualMiles: string;
   isRoundTrip: boolean;
-  odometerReading: string;
   entity: string;
   entityOther: string;
   // Business purpose (dropdown for LH / LP / AJL; free text for others)
@@ -59,7 +58,6 @@ export function LogMiles() {
     defaultValues: {
       date: todayISODate(), fromPlaceId: '', fromAddress: '',
       toPlaceId: '', toAddress: '', actualMiles: '', isRoundTrip: false,
-      odometerReading: '',
       entity: '', entityOther: '',
       businessPurpose: '', businessPurposeOther: '', description: '',
       notes: '',
@@ -105,7 +103,6 @@ export function LogMiles() {
               toAddress: entry.toAddress || '',
               actualMiles: String(entry.actualMiles),
               isRoundTrip: entry.isRoundTrip,
-              odometerReading: entry.odometerReading != null ? String(entry.odometerReading) : '',
               entity: entry.entity,
               entityOther: entry.entityOther || '',
               businessPurpose,
@@ -221,7 +218,6 @@ export function LogMiles() {
       toAddress: values.toAddress || null,
       actualMiles: parseFloat(values.actualMiles) || 0,
       isRoundTrip: values.isRoundTrip,
-      odometerReading: values.odometerReading ? parseFloat(values.odometerReading) : null,
       entity: values.entity,
       entityOther: values.entityOther || null,
       description: descriptionValue,
@@ -425,24 +421,6 @@ export function LogMiles() {
               <Switch checked={field.value} onCheckedChange={field.onChange} />
             )}
           />
-        </div>
-
-        {/* Odometer Reading (#1) */}
-        <div>
-          <Label>
-            Odometer Reading <span className="text-muted-foreground font-normal">(optional — for reconciliation)</span>
-          </Label>
-          <div className="relative mt-1">
-            <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              type="number"
-              step="1"
-              min="0"
-              placeholder="e.g. 48235"
-              {...register('odometerReading')}
-              className="pl-9"
-            />
-          </div>
         </div>
 
         {/* Entity / Purpose */}
