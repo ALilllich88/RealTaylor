@@ -25,17 +25,60 @@ export const HOUR_ENTITIES = ENTITIES.filter((e) => e.value !== 'Personal');
 
 export const ACTIVITY_TYPES = [
   'Property Management',
+  'Inspect Equipment',
+  'Inspect Property',
   'Leasing / Tenant Relations',
+  'Collect or Deposit Rent',
   'Property Showings',
   'Marketing / Listing',
   'Administrative / Paperwork',
   'Property Maintenance Coordination',
+  'Property Acquisition Activities',
   'Travel (real estate related)',
   'Continuing Education',
   'Other',
 ] as const;
 
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
+
+// Entity-specific business purpose lists for the Log Miles form.
+// Entities not listed here use a free-text description field instead.
+export const BUSINESS_PURPOSES: Partial<Record<string, readonly string[]>> = {
+  'Lillich Holdings': [
+    'Property Management',
+    'Inspect Equipment',
+    'Leasing / Tenant Relations',
+    'Collect or Deposit Rent',
+    'Travel (real estate related)',
+    'Property Acquisition Activities',
+    'Other',
+  ],
+  'Lillich Properties': [
+    'Property Management',
+    'Inspect Property',
+    'Leasing / Tenant Relations',
+    'Collect or Deposit Rent',
+    'Travel (real estate related)',
+    'Property Acquisition Activities',
+    'Other',
+  ],
+  'AJL Investments': [
+    'Property Management',
+    'Inspect Property',
+    'Leasing / Tenant Relations',
+    'Collect or Deposit Rent',
+    'Travel (real estate related)',
+    'Property Acquisition Activities',
+    'Other',
+  ],
+};
+
+// Maps FavoritePlace name keywords → default entity for auto-population.
+export const PLACE_ENTITY_DEFAULTS: Array<{ contains: string; entity: string }> = [
+  { contains: 'Envoltz',     entity: 'Lillich Holdings' },
+  { contains: 'Sundance',    entity: 'Lillich Properties' },
+  { contains: 'Beach House', entity: 'AJL Investments' },
+];
 
 export const PLACE_CATEGORIES = ['Home', 'Office', 'Client', 'Government', 'Other'] as const;
 export type PlaceCategory = (typeof PLACE_CATEGORIES)[number];
@@ -71,6 +114,7 @@ export interface MileageEntry {
   calculatedMiles?: number | null;
   actualMiles: number;
   isRoundTrip: boolean;
+  odometerReading?: number | null;
   entity: string;
   entityOther?: string | null;
   description: string;

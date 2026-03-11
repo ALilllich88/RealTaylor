@@ -55,7 +55,9 @@ router.post('/', async (req, res) => {
   try {
     const {
       date, fromPlaceId, fromAddress, toPlaceId, toAddress,
-      calculatedMiles, actualMiles, isRoundTrip, entity, entityOther, description, notes,
+      calculatedMiles, actualMiles, isRoundTrip, odometerReading,
+      entity, entityOther, description, notes,
+      timeAtLocation, // decimal hours spent at destination (optional)
     } = req.body;
 
     if (!date || actualMiles == null || !entity || !description) {
@@ -77,6 +79,7 @@ router.post('/', async (req, res) => {
         calculatedMiles: calculatedMiles ?? null,
         actualMiles: parseFloat(actualMiles),
         isRoundTrip: !!isRoundTrip,
+        odometerReading: odometerReading != null ? parseFloat(odometerReading) : null,
         entity,
         entityOther: entityOther || null,
         description,
@@ -85,12 +88,12 @@ router.post('/', async (req, res) => {
       include: { fromPlace: true, toPlace: true },
     });
 
-    // Auto-create hours entry for business trips
     if (entity !== 'Personal') {
       const fromLabel = fromPlace?.name ?? fromAddress ?? 'Unknown';
       const toLabel = toPlace?.name ?? toAddress ?? 'Unknown';
       const hoursEstimate = estimateHours(parseFloat(actualMiles));
 
+      // Auto-create travel hours entry (linked to this mileage entry)
       await prisma.hoursEntry.create({
         data: {
           date: new Date(date),
@@ -103,6 +106,24 @@ router.post('/', async (req, res) => {
           mileageEntryId: entry.id,
         },
       });
+
+      // Auto-create "time at location" hours entry if provided (unlinked)
+      const locationHours = timeAtLocation != null ? parseFloat(timeAtLocation) : 0;
+      if (locationHours > 0) {
+        const toLabel2 = toPlace?.name ?? toAddress ?? 'Unknown';
+        await prisma.hoursEntry.create({
+          data: {
+            date: new Date(date),
+            entity,
+            entityOther: entityOther || null,
+            activityType: description, // business purpose selected by user
+            hours: Math.round(locationHours * 100) / 100,
+            description: `At location: ${toLabel2} — ${description}`,
+            isAutoLogged: true,
+            mileageEntryId: null, // cannot reuse the unique FK
+          },
+        });
+      }
     }
 
     const fullEntry = await prisma.mileageEntry.findUnique({
@@ -138,7 +159,8 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const {
       date, fromPlaceId, fromAddress, toPlaceId, toAddress,
-      calculatedMiles, actualMiles, isRoundTrip, entity, entityOther, description, notes,
+      calculatedMiles, actualMiles, isRoundTrip, odometerReading,
+      entity, entityOther, description, notes,
     } = req.body;
 
     const existing = await prisma.mileageEntry.findUnique({
@@ -165,6 +187,9 @@ router.put('/:id', async (req, res) => {
         calculatedMiles: calculatedMiles ?? existing.calculatedMiles,
         actualMiles: actualMiles != null ? parseFloat(actualMiles) : existing.actualMiles,
         isRoundTrip: isRoundTrip != null ? !!isRoundTrip : existing.isRoundTrip,
+        odometerReading: odometerReading !== undefined
+          ? (odometerReading != null ? parseFloat(odometerReading) : null)
+          : existing.odometerReading,
         entity: entity ?? existing.entity,
         entityOther: entityOther ?? existing.entityOther,
         description: description ?? existing.description,

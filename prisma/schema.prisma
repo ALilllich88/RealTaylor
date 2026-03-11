@@ -32,10 +32,11 @@ model MileageEntry {
   toPlaceId       String?
   toPlace         FavoritePlace? @relation("TripTo", fields: [toPlaceId], references: [id], onDelete: SetNull)
   toAddress       String? // For one-time addresses not saved as favorites
-  calculatedMiles Float?
-  actualMiles     Float
-  isRoundTrip     Boolean       @default(false)
-  entity          String // Lillich Holdings, Lillich Properties, AJL Investments, Taylor Lillich Realtor, Personal, Other
+  calculatedMiles  Float?
+  actualMiles      Float
+  isRoundTrip      Boolean       @default(false)
+  odometerReading  Float?        // Optional odometer reading for reconciliation
+  entity           String // Lillich Holdings, Lillich Properties, AJL Investments, Taylor Lillich Realtor, Personal, Other
   entityOther     String? // Free text if entity is "Other"
   description     String
   notes           String?
