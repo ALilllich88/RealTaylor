@@ -71,3 +71,12 @@ model DistanceCache {
 
   @@unique([fromAddress, toAddress])
 }
+
+model OdometerReading {
+  id        String   @id @default(cuid())
+  date      DateTime
+  reading   Float
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

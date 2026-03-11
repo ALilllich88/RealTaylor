@@ -96,6 +96,25 @@ router.get('/', async (_req, res) => {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 10);
 
+    // Odometer stats
+    const latestOdometer = await prisma.odometerReading.findFirst({
+      orderBy: { date: 'desc' },
+    });
+    const firstYearOdometer = await prisma.odometerReading.findFirst({
+      where: { date: { gte: yearStart, lte: yearEnd } },
+      orderBy: { date: 'asc' },
+    });
+
+    let businessMilesPct: number | null = null;
+    if (
+      latestOdometer &&
+      firstYearOdometer &&
+      latestOdometer.reading > firstYearOdometer.reading
+    ) {
+      const totalDriven = latestOdometer.reading - firstYearOdometer.reading;
+      businessMilesPct = Math.round((ytdBusinessMiles / totalDriven) * 100 * 10) / 10;
+    }
+
     res.json({
       ytdHours: Math.round(ytdHours * 100) / 100,
       ytdBusinessMiles: Math.round(ytdBusinessMiles * 100) / 100,
@@ -108,6 +127,13 @@ router.get('/', async (_req, res) => {
       projectedYearEnd: Math.round(projectedYearEnd * 10) / 10,
       isOnPace: paceStatus === 'on-track',
       paceStatus,
+      latestOdometer: latestOdometer
+        ? { reading: latestOdometer.reading, date: latestOdometer.date.toISOString() }
+        : null,
+      firstYearOdometer: firstYearOdometer
+        ? { reading: firstYearOdometer.reading, date: firstYearOdometer.date.toISOString() }
+        : null,
+      businessMilesPct,
     });
   } catch (error) {
     console.error(error);

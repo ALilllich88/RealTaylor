@@ -141,6 +141,15 @@ export interface HoursEntry {
   updatedAt: string;
 }
 
+export interface OdometerReading {
+  id: string;
+  date: string;
+  reading: number;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DashboardData {
   ytdHours: number;
   ytdBusinessMiles: number;
@@ -153,6 +162,9 @@ export interface DashboardData {
   projectedYearEnd: number;
   isOnPace: boolean;
   paceStatus: 'on-track' | 'behind' | 'significantly-behind';
+  latestOdometer: { reading: number; date: string } | null;
+  firstYearOdometer: { reading: number; date: string } | null;
+  businessMilesPct: number | null;
 }
 
 export interface RecentActivityItem {

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getToken, clearToken } from './auth';
 import type {
-  FavoritePlace, MileageEntry, HoursEntry, DashboardData,
+  FavoritePlace, MileageEntry, HoursEntry, DashboardData, OdometerReading,
   CalculateDistanceRequest, CalculateDistanceResponse,
 } from '@shared/types';
 
@@ -69,6 +69,12 @@ export const deleteHours = (id: string) =>
 
 // Dashboard
 export const getDashboard = () => api.get<DashboardData>('/dashboard').then((r) => r.data);
+
+// Odometer
+export const getOdometerReadings = () =>
+  api.get<OdometerReading[]>('/odometer').then((r) => r.data);
+export const createOdometerReading = (data: { date: string; reading: number; notes?: string }) =>
+  api.post<OdometerReading>('/odometer', data).then((r) => r.data);
 
 // Reports — returns a download URL
 export function reportUrl(type: 'hours' | 'mileage' | 'annual-summary', params: Record<string, string>): string {

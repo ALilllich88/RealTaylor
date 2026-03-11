@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RepsProgress } from '@/components/dashboard/RepsProgress';
 import { MileageSummary } from '@/components/dashboard/MileageSummary';
+import { OdometerCard } from '@/components/dashboard/OdometerCard';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { useDashboard } from '@/hooks/useDashboard';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
@@ -44,6 +45,7 @@ export function Dashboard() {
         <>
           <RepsProgress data={data} />
           <MileageSummary data={data} />
+          <OdometerCard data={data} />
 
           {/* Monthly Hours Chart */}
           {data.monthlyHours.some((m) => m.hours > 0) && (

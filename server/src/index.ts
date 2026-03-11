@@ -17,6 +17,7 @@ import mileageRouter from './routes/mileage.js';
 import hoursRouter from './routes/hours.js';
 import dashboardRouter from './routes/dashboard.js';
 import reportsRouter from './routes/reports.js';
+import odometerRouter from './routes/odometer.js';
 
 // Catch any unhandled errors so they appear in Railway deploy logs
 process.on('uncaughtException', (err) => {
@@ -55,6 +56,7 @@ app.use('/api/places', authMiddleware, placesRouter);
 app.use('/api/mileage', authMiddleware, mileageRouter);
 app.use('/api/hours', authMiddleware, hoursRouter);
 app.use('/api/dashboard', authMiddleware, dashboardRouter);
+app.use('/api/odometer', authMiddleware, odometerRouter);
 app.use('/api/reports', authMiddleware, reportsRouter);
 
 // Serve client in production
