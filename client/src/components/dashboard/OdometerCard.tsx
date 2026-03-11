@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Gauge, Plus, X, Check } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useCreateOdometerReading } from '@/hooks/useOdometer';
+import { useOdometerReadings, useCreateOdometerReading } from '@/hooks/useOdometer';
 import type { DashboardData } from '@shared/types';
 
 interface Props {
@@ -23,9 +23,24 @@ export function OdometerCard({ data }: Props) {
   const [readingDate, setReadingDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState('');
 
+  const { data: readings = [] } = useOdometerReadings();
   const create = useCreateOdometerReading();
 
-  const { latestOdometer, firstYearOdometer, businessMilesPct } = data;
+  // Derive latest and first-of-year from the live readings list
+  const yearStart = new Date(new Date().getFullYear(), 0, 1);
+  const sorted = [...readings].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const latestOdometer = sorted[0] ?? null;
+  const firstYearOdometer =
+    [...readings]
+      .filter((r) => new Date(r.date) >= yearStart)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] ?? null;
+
+  const businessMilesPct: number | null =
+    latestOdometer &&
+    firstYearOdometer &&
+    latestOdometer.reading > firstYearOdometer.reading
+      ? Math.round((data.ytdBusinessMiles / (latestOdometer.reading - firstYearOdometer.reading)) * 100 * 10) / 10
+      : null;
 
   const pctColor =
     businessMilesPct === null
